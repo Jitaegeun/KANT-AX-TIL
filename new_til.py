@@ -1,9 +1,10 @@
-"""README.md 내용이 첫 번째 셀에 들어간 새 노트북을 만든다.
+"""README.md 내용을 '### 숫자' 제목마다 마크다운 셀로 나눠서 새 노트북을 만든다.
 
 python new_til.py             -> 오늘 날짜 노트북 (예: 2026.11.10.ipynb)
 python new_til.py 2026.11.09  -> 이름을 직접 지정 (0바이트 빈 파일이면 내용을 채운다)
 """
 import json
+import re
 import sys
 from datetime import date
 from pathlib import Path
@@ -19,11 +20,17 @@ if notebook_path.exists() and notebook_path.stat().st_size > 0:
 
 readme = (ROOT / "README.md").read_text(encoding="utf-8-sig")
 
+# "### 1." 같은 줄 바로 앞에서 잘라 구역별로 나눈다
+sections = [s.strip("\n") for s in re.split(r"(?m)^(?=### \d)", readme) if s.strip()]
+
+cells = [
+    {"cell_type": "markdown", "metadata": {}, "source": section.splitlines(keepends=True)}
+    for section in sections
+]
+cells.append({"cell_type": "code", "execution_count": None, "metadata": {}, "outputs": [], "source": []})
+
 notebook = {
-    "cells": [
-        {"cell_type": "markdown", "metadata": {}, "source": readme.splitlines(keepends=True)},
-        {"cell_type": "code", "execution_count": None, "metadata": {}, "outputs": [], "source": []},
-    ],
+    "cells": cells,
     "metadata": {"language_info": {"name": "python"}},
     "nbformat": 4,
     "nbformat_minor": 4,
